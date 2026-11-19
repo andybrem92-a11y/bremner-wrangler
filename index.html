@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bremners">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#9e1018">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Bremner Wrangler</title>
+<style>
+:root{
+  --red:#9e1018; --gold:#f2c14e;
+  --bg:#fbf7f2; --card:#ffffff; --ink:#1b1414; --muted:#5b4f4f; --line:#e6ddd4; --field:#fff;
+  --green:#1f6b3a; --blue:#1d4f91; --purple:#5b2a86; --teal:#0f6670; --late:#b3261e; --ok:#1f6b3a;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#140d0e; --card:#221819; --ink:#fbf3ee; --muted:#c9b8b3; --line:#3a2b2c; --field:#1a1213; --late:#ff8a80; --ok:#7ddc9a;}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:19px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-text-size-adjust:100%;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+header{background:var(--red); color:#fff; padding:calc(18px + env(safe-area-inset-top)) 20px 22px}
+header h1{margin:0; font-size:32px; line-height:1.1}
+header p{margin:6px 0 0; font-size:19px; opacity:.95}
+main{max-width:560px; margin:0 auto; padding:16px}
+
+.next{background:var(--card); border:3px solid var(--gold); border-radius:18px; padding:16px 18px; margin-bottom:18px}
+.next .label{font-size:16px; font-weight:700; color:var(--muted); margin:0}
+.next .what{font-size:24px; font-weight:800; margin:2px 0}
+.next .when{font-size:19px; margin:0}
+
+.big{
+  display:flex; align-items:center; gap:16px; width:100%;
+  min-height:92px; margin:0 0 14px; padding:16px 20px;
+  border:0; border-radius:20px; color:#fff; text-decoration:none;
+  font:inherit; font-size:25px; font-weight:800; text-align:left;
+  box-shadow:0 4px 0 rgba(0,0,0,.25); cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.big:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.big:focus-visible,.btn:focus-visible,.pick:focus-visible{outline:4px solid var(--gold); outline-offset:3px}
+.big .ico{font-size:40px; line-height:1; flex:none}
+.big small{display:block; font-size:17px; font-weight:500; opacity:.95}
+.b-where{background:var(--blue)} .b-eta{background:var(--teal)} .b-call{background:var(--green)}
+.b-send{background:var(--purple)} .b-loo{background:var(--red)} .b-alt{background:#3d3434}
+
+.screen{display:none} .screen.on{display:block}
+.back{
+  display:inline-flex; align-items:center; min-height:52px; padding:0 18px; margin:0 0 14px;
+  background:transparent; color:var(--ink); border:2px solid var(--line); border-radius:14px;
+  font:inherit; font-size:20px; font-weight:700; cursor:pointer;
+}
+h2{font-size:27px; margin:4px 0 10px}
+h3{font-size:22px; margin:22px 0 10px}
+.note{font-size:18px; color:var(--muted); margin:0 0 16px}
+.card{background:var(--card); border:2px solid var(--line); border-radius:16px; padding:14px 16px; margin:0 0 14px}
+.card p{margin:0}
+.card .t{font-weight:800; font-size:21px}
+.num{font-weight:800; letter-spacing:.5px; white-space:nowrap}
+.tag{display:inline-block; background:var(--gold); color:#1b1414; font-size:15px; font-weight:800; padding:2px 10px; border-radius:99px; margin-left:6px; vertical-align:middle}
+.small-link{display:inline-block; margin:2px 0 18px; font-size:18px; color:var(--ink)}
+.status{display:none; background:var(--card); border:3px solid var(--gold); border-radius:16px; padding:14px 16px; margin:0 0 16px; font-size:19px; font-weight:600}
+.status.on{display:block}
+
+.pair{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 16px}
+.pick{min-height:64px; border:3px solid var(--line); border-radius:16px; background:var(--card); color:var(--ink); font:inherit; font-size:19px; font-weight:800; cursor:pointer; padding:8px}
+.pick[aria-pressed=true]{border-color:var(--teal); background:var(--teal); color:#fff}
+
+.stop{background:var(--card); border:2px solid var(--line); border-radius:16px; padding:14px 16px; margin:0 0 12px}
+.stop .n{font-size:21px; font-weight:800; margin:0}
+.stop .k{font-size:17px; color:var(--muted); margin:2px 0 0}
+.stop .d{font-size:19px; font-weight:700; margin:4px 0 10px}
+.row{display:flex; gap:10px; flex-wrap:wrap}
+.btn{
+  flex:1 1 140px; display:inline-flex; justify-content:center; align-items:center; min-height:56px; padding:8px 14px;
+  border:0; border-radius:14px; color:#fff; font:inherit; font-size:19px; font-weight:800; text-align:center; text-decoration:none; cursor:pointer;
+}
+.btn.go{background:var(--blue)} .btn.txt{background:var(--purple)} .btn.dark{background:#3d3434} .btn.save{background:var(--green)}
+.btn.ghost{background:transparent; color:var(--ink); border:2px solid var(--line)}
+
+.eta{background:var(--card); border:3px solid var(--teal); border-radius:18px; padding:18px; margin:0 0 14px}
+.eta .left{font-size:34px; font-weight:800; line-height:1.1; margin:0}
+.eta .sub{font-size:20px; margin:6px 0 0}
+.eta .verdict{font-size:20px; font-weight:800; margin:10px 0 0}
+.verdict.late{color:var(--late)} .verdict.ok{color:var(--ok)}
+.refresh{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 6px; font-size:17px; color:var(--muted)}
+.refresh button{min-height:48px; padding:0 16px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:18px; font-weight:700; cursor:pointer; flex:none}
+
+details{background:var(--card); border:2px solid var(--line); border-radius:16px; padding:12px 16px; margin-top:22px}
+summary{font-weight:800; font-size:20px; cursor:pointer; min-height:36px}
+details ol{padding-left:24px; margin:10px 0 4px}
+details li{margin-bottom:8px}
+footer{text-align:center; font-size:17px; color:var(--muted); margin-top:18px}
+footer a{color:var(--ink); font-weight:700}
+.edit-link{display:block; margin:26px auto 0; background:none; border:0; color:var(--muted); font:inherit; font-size:15px; text-decoration:underline; cursor:pointer; min-height:44px}
+
+/* editor */
+.ed label{display:block; font-size:16px; font-weight:700; margin:0 0 10px}
+.ed input,.ed textarea{display:block; width:100%; margin-top:4px; min-height:48px; padding:10px 12px; border:2px solid var(--line); border-radius:12px; background:var(--field); color:var(--ink); font:inherit; font-size:17px}
+.ed textarea{min-height:70px}
+.ed input:focus,.ed textarea:focus{outline:3px solid var(--gold); outline-offset:1px}
+.two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px}
+.ed-head{display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 10px}
+.ed-head b{font-size:20px}
+.ed-head .row button{min-height:44px; min-width:44px; padding:0 12px; border-radius:10px; border:2px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:16px; font-weight:700; cursor:pointer}
+.geo{font-size:15px; color:var(--muted); margin:2px 0 0}
+.geo a{color:var(--ink)}
+.toast{position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:#1b1414; color:#fff; padding:12px 18px; border-radius:14px; font-size:17px; font-weight:700; display:none; z-index:9; max-width:90vw}
+.toast.on{display:block}
+@media (prefers-reduced-motion: reduce){.big:active{transform:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="hTitle">Bremner Wrangler</h1>
+  <p id="hDate"></p>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <section id="home" class="screen on">
+    <div class="next">
+      <p class="label">What's next</p>
+      <p class="what" id="nextWhat"></p>
+      <p class="when" id="nextWhen"></p>
+    </div>
+
+    <button class="big b-where" data-go="where">
+      <span class="ico">🗺️</span><span>Where am I going?<small>Directions on the map</small></span>
+    </button>
+    <button class="big b-eta" data-go="eta">
+      <span class="ico">⏱️</span><span>Are we there yet?<small>Time left and loo stops ahead</small></span>
+    </button>
+    <button class="big b-call" data-go="call" id="callHomeBtn">
+      <span class="ico">📞</span><span><span id="callHomeLabel">Call ahead</span><small>Running late? Ring them</small></span>
+    </button>
+    <button class="big b-send" id="sendBtn">
+      <span class="ico">📍</span><span>Send my location to…<small>You choose who</small></span>
+    </button>
+    <button class="big b-loo" data-go="loo">
+      <span class="ico">🚽</span><span>I need the loo!<small>Find one fast</small></span>
+    </button>
+
+    <div class="status" id="homeStatus" role="status" aria-live="polite"></div>
+
+    <details>
+      <summary>The plan</summary>
+      <div id="planList" style="margin-top:12px"></div>
+    </details>
+
+    <details>
+      <summary>Put this on your home screen</summary>
+      <ol>
+        <li>Open this page in <b>Safari</b>.</li>
+        <li>Tap the <b>Share</b> button (the square with an arrow pointing up).</li>
+        <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+        <li>Tap <b>Add</b>. It now has its own icon, like an app.</li>
+      </ol>
+    </details>
+
+    <footer id="stuck"></footer>
+    <button class="edit-link" id="editLink">Edit the plan</button>
+  </section>
+
+  <!-- WHERE AM I GOING -->
+  <section id="where" class="screen">
+    <button class="back" data-go="home">‹ Back</button>
+    <h2>Where am I going?</h2>
+    <p class="note">Tap where you're heading. Your map will open with directions.</p>
+    <div id="whereList"></div>
+  </section>
+
+  <!-- ARE WE THERE YET -->
+  <section id="eta" class="screen">
+    <button class="back" data-go="home">‹ Back</button>
+    <h2>Are we there yet?</h2>
+    <div class="pair" id="etaPicks" role="group" aria-label="Where are you heading?"></div>
+    <div class="eta">
+      <p class="left" id="etaLeft">Working it out…</p>
+      <p class="sub" id="etaSub"></p>
+      <p class="verdict" id="etaVerdict"></p>
+    </div>
+    <a class="big b-call" id="etaCall" href="#" hidden>
+      <span class="ico">📞</span><span id="etaCallLabel">Ring them</span>
+    </a>
+    <div class="refresh">
+      <span id="etaUpdated">This doesn't include traffic. If the satnav says later, trust the satnav.</span>
+      <button id="etaRefresh">↻ Update</button>
+    </div>
+    <h3>🚻 Loo stops ahead on the way</h3>
+    <div id="routeStops"><p class="note">Looking along your route…</p></div>
+  </section>
+
+  <!-- CALL -->
+  <section id="call" class="screen">
+    <button class="back" data-go="home">‹ Back</button>
+    <h2>Call ahead</h2>
+    <div id="callList"></div>
+  </section>
+
+  <!-- LOO -->
+  <section id="loo" class="screen">
+    <button class="back" data-go="home">‹ Back</button>
+    <h2>I need the loo!</h2>
+    <p class="note">Pick your mission.</p>
+    <button class="big b-loo" id="soloBtn">
+      <span class="ico">🧍</span><span>Solo mission<small>Show me the nearest ones and take me there</small></span>
+    </button>
+    <button class="big b-send" id="coopBtn">
+      <span class="ico">🤝</span><span>Co-op mission<small id="coopSub">I pick one, they get it for their satnav</small></span>
+    </button>
+  </section>
+
+  <!-- LOO LIST -->
+  <section id="looList" class="screen">
+    <button class="back" data-go="loo">‹ Back</button>
+    <h2 id="looTitle">Nearest loos</h2>
+    <p class="note" id="looNote"></p>
+    <div id="looStops"></div>
+  </section>
+
+  <!-- PIN -->
+  <section id="pin" class="screen ed">
+    <button class="back" data-go="home">‹ Back</button>
+    <h2>Edit the plan</h2>
+    <p class="note">Enter the PIN to make changes.</p>
+    <label>PIN <input id="pinIn" type="password" inputmode="numeric" autocomplete="off"></label>
+    <div class="status" id="pinStatus"></div>
+    <button class="big b-eta" id="pinGo"><span class="ico">🔓</span><span>Unlock</span></button>
+  </section>
+
+  <!-- EDITOR -->
+  <section id="editor" class="screen ed">
+    <button class="back" data-go="home">‹ Back</button>
+    <h2>Edit the plan</h2>
+    <p class="note">Changes save on this phone as you type. Nobody else sees them until you tap <b>Publish</b>.</p>
+
+    <div class="card">
+      <label>Event name <input data-ef="title" placeholder="Bremner Graduation"></label>
+      <label>Main date <input type="date" data-ef="date"></label>
+      <div class="two">
+        <label>Wrangler's name <input data-ef="wrangler.name" placeholder="Andy"></label>
+        <label>Wrangler's mobile <input type="tel" data-ef="wrangler.phone" placeholder="07..."></label>
+      </div>
+      <p class="geo">The wrangler gets co-op loo texts and the "Stuck? Ring…" link.</p>
+    </div>
+
+    <h3>Stops</h3>
+    <div id="edStops"></div>
+    <div class="row" style="margin-bottom:16px">
+      <button class="btn dark" id="addStop">+ Add a stop</button>
+    </div>
+
+    <div class="status" id="pubStatus" role="status" aria-live="polite"></div>
+    <button class="big b-call" id="publishBtn"><span class="ico">🚀</span><span>Publish to everyone<small>Their apps update within a few minutes</small></span></button>
+
+    <div class="row" style="margin:4px 0 10px">
+      <button class="btn ghost" id="discardBtn">Undo my changes</button>
+      <button class="btn ghost" id="newEventBtn">Start a new event</button>
+    </div>
+
+    <details id="setup">
+      <summary>Publishing settings</summary>
+      <p class="geo" style="margin:10px 0">Stored only on this phone. Use a fine-grained GitHub token with <b>Contents: Read and write</b> on just this repo.</p>
+      <div class="two">
+        <label>GitHub username <input id="ghOwner" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+        <label>Repo name <input id="ghRepo" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="bremner-wrangler"></label>
+      </div>
+      <label>Token <input id="ghToken" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label>
+      <label>Edit PIN (blank to keep the current one) <input id="pinSet" type="password" inputmode="numeric" autocomplete="off"></label>
+      <div class="row"><button class="btn dark" id="ghTest">Test connection</button></div>
+      <div class="status" id="ghStatus" style="margin-top:12px"></div>
+    </details>
+  </section>
+
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+{
+  // ---------- default plan (used until plan.json loads) ----------
+  const DEFAULT_PLAN = {"title":"Bremner Graduation","date":"2026-12-09","wrangler":{"name":"Andy","phone":"07704153178"},"stops":[{"emoji":"🎓","name":"Graduation ceremony","date":"2026-12-09","time":"13:45","ends":"15:00","place":"Great Hall, Lancaster University","address":"Great Hall, Lancaster University, Bailrigg, Lancaster","postcode":"LA1 4YW","phone":"","callLabel":"","note":"The ceremony lasts about 1 hour 15 minutes.","lat":54.0103,"lng":-2.7868,"geoKey":"LA1 4YW"},{"emoji":"🍽️","name":"Dinner","date":"2026-12-09","time":"18:30","ends":"21:30","place":"3 Plawsworth Road, Sacriston","address":"3 Plawsworth Road, Sacriston, Durham","postcode":"DH7 6HJ","phone":"01913802898","callLabel":"the restaurant","note":"","lat":54.8199,"lng":-1.6268,"geoKey":"DH7 6HJ"}],"editPinHash":"","updated":"2026-11-19T16:30:00.000Z"};
+  const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+
+  const $ = id => document.getElementById(id);
+  const go = url => (window.__testGo ? window.__testGo(url) : (location.href = url));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const LS = {
+    get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    del(k){ try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  let plan = LS.get('bw.plan', null) || DEFAULT_PLAN;
+
+  // ---------- helpers ----------
+  function fmtLeft(ms){
+    const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60), r = m % 60;
+    if (h && r) return h + ' hr ' + r + ' min';
+    return h ? h + ' hr' : r + ' min';
+  }
+  function clock(d){ let h = d.getHours(); const m = d.getMinutes(), pm = h >= 12; h = h % 12 || 12; return h + ':' + String(m).padStart(2, '0') + (pm ? 'pm' : 'am'); }
+  const longDate = d => d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+  const shortDate = d => d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+  const miles = m => { const mi = m / 1609.34; return mi < 0.2 ? Math.round(m) + ' metres' : (mi < 10 ? mi.toFixed(1) : Math.round(mi)) + ' miles'; };
+  function dist(a, b){
+    const R = 6371000, t = Math.PI / 180, dLat = (b.lat - a.lat) * t, dLng = (b.lng - a.lng) * t;
+    const x = Math.sin(dLat/2)**2 + Math.cos(a.lat*t) * Math.cos(b.lat*t) * Math.sin(dLng/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  }
+  const telOf = p => { let d = String(p || '').replace(/[^\d+]/g, ''); if (d.startsWith('0')) d = '+44' + d.slice(1); return d; };
+  function showPhone(p){
+    let d = String(p || '').replace(/[^\d+]/g, ''); if (d.startsWith('+44')) d = '0' + d.slice(3);
+    if (!/^0\d{10}$/.test(d)) return p;
+    if (/^02/.test(d)) return d.slice(0,3) + ' ' + d.slice(3,7) + ' ' + d.slice(7);
+    if (/^01\d1/.test(d) || /^011/.test(d)) return d.slice(0,4) + ' ' + d.slice(4,7) + ' ' + d.slice(7);
+    return d.slice(0,5) + ' ' + d.slice(5);
+  }
+  function say(id, msg){ const s = $(id); s.textContent = msg; s.classList.toggle('on', !!msg); }
+  let toastT; function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3500); }
+  async function fetchT(url, opts = {}, ms = 15000){
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+    try { const r = await fetch(url, { ...opts, signal: c.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+    finally { clearTimeout(t); }
+  }
+
+  // ---------- plan timing ----------
+  const at = (date, time) => new Date(date + 'T' + (time || '00:00') + ':00');
+  function stops(){
+    const a = (plan.stops || []).map(s => ({ ...s, start: at(s.date || plan.date, s.time) }));
+    a.forEach((s, i) => { s.end = s.ends ? at(s.date || plan.date, s.ends) : (a[i+1] ? a[i+1].start : new Date(s.start.getTime() + 2 * 3600000)); if (s.end < s.start) s.end = new Date(s.start.getTime() + 2 * 3600000); });
+    return a;
+  }
+  const nextIdx = () => { const now = new Date(); return stops().findIndex(s => now < s.end); };
+  const sameDay = (a, b) => a.toDateString() === b.toDateString();
+  const dirHref = s => 'https://maps.apple.com/?daddr=' + encodeURIComponent([s.address, s.postcode].filter(Boolean).join(', ')) + '&dirflg=d';
+  const gDirHref = s => 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent([s.address, s.postcode].filter(Boolean).join(' '));
+  const placeLine = s => s.place || s.address || s.postcode || '';
+  const wr = () => plan.wrangler || {};
+
+  // ---------- render ----------
+  function renderAll(){
+    const all = stops(), now = new Date(), ni = nextIdx();
+    $('hTitle').textContent = plan.title || 'Bremner Wrangler';
+    document.title = plan.title || 'Bremner Wrangler';
+    const days = [...new Set(all.map(s => s.start.toDateString()))];
+    $('hDate').textContent = !all.length ? '' : days.length > 1 ? shortDate(all[0].start) + ' to ' + shortDate(all[all.length-1].start) : longDate(all[0].start);
+
+    // what's next
+    if (!all.length){ $('nextWhat').textContent = 'No plan yet'; $('nextWhen').textContent = 'Check back soon.'; }
+    else if (ni < 0){ $('nextWhat').textContent = 'All done!'; $('nextWhen').textContent = 'Hope it was a lovely day.'; }
+    else {
+      const s = all[ni]; let when = clock(s.start) + ' · ' + placeLine(s);
+      if (now >= s.start) when = 'On now · ' + placeLine(s);
+      else if (sameDay(now, s.start)) when += ' · in ' + fmtLeft(s.start - now);
+      else when = shortDate(s.start) + ' · ' + when;
+      $('nextWhat').textContent = (s.emoji ? s.emoji + ' ' : '') + s.name;
+      $('nextWhen').textContent = when;
+    }
+
+    // where
+    $('whereList').innerHTML = all.map((s, i) => `
+      <a class="big b-where" href="${esc(dirHref(s))}">
+        <span class="ico">${esc(s.emoji || '📍')}</span><span>${esc(s.name)}${i === ni ? ' <span class="tag">NEXT</span>' : ''}<small>${esc(clock(s.start) + ' · ' + placeLine(s))}</small></span>
+      </a>
+      <a class="small-link" href="${esc(gDirHref(s))}">Use Google Maps instead</a>`).join('') || '<p class="note">No stops in the plan yet.</p>';
+
+    // plan list
+    $('planList').innerHTML = all.map(s => `
+      <div class="card">
+        <p class="t">${esc((days.length > 1 ? shortDate(s.start) + ', ' : '') + clock(s.start) + ' · ' + s.name)}</p>
+        <p>${esc([s.address, s.postcode].filter(Boolean).join(', '))}</p>
+        ${s.phone ? `<p>Phone: <span class="num">${esc(showPhone(s.phone))}</span></p>` : ''}
+        ${s.note ? `<p class="note" style="margin:6px 0 0">${esc(s.note)}</p>` : ''}
+      </div>`).join('');
+
+    // calls
+    const phones = all.filter(s => s.phone);
+    $('callHomeBtn').hidden = !phones.length;
+    $('callHomeLabel').textContent = phones.length === 1 ? 'Call ' + (phones[0].callLabel || phones[0].name) : 'Call ahead';
+    $('callList').innerHTML = phones.map(s => {
+      let cd = longDate(s.start);
+      if (sameDay(now, s.start)) cd = now < s.start ? 'That’s in ' + fmtLeft(s.start - now) + '.' : 'That time has passed. Ring them now if you’re not there yet.';
+      return `
+      <div class="card">
+        <p class="t">${esc(s.name)} · booked for ${esc(clock(s.start))}</p>
+        <p>${esc(cd)}</p>
+        <p style="margin-top:8px">If the satnav says you'll get there <b>after ${esc(clock(s.start))}</b>, give them a ring and let them know.</p>
+      </div>
+      <a class="big b-call" href="tel:${esc(telOf(s.phone))}">
+        <span class="ico">📞</span><span>Ring ${esc(s.callLabel || s.name)}<small class="num" style="font-size:20px">${esc(showPhone(s.phone))}</small></span>
+      </a>
+      <p class="note">Say: "Hello, it's the Bremner booking for ${esc(clock(s.start))}. We're running late and will be about … minutes."</p>`;
+    }).join('');
+
+    // wrangler
+    const w = wr();
+    $('stuck').innerHTML = w.phone ? `Stuck? <a href="tel:${esc(telOf(w.phone))}">Ring ${esc(w.name || 'the wrangler')}: ${esc(showPhone(w.phone))}</a>` : '';
+    $('coopSub').textContent = 'I pick one, ' + (w.name || 'the wrangler') + ' gets it for their satnav';
+    $('coopBtn').hidden = !w.phone;
+  }
+
+  async function loadPlan(){
+    try {
+      const j = await fetchT('plan.json?t=' + Date.now(), { cache:'no-store' }, 8000);
+      if (!j || !Array.isArray(j.stops)) return;
+      if (plan.updated && j.updated && j.updated < plan.updated) return; // ours is newer (just published)
+      const changed = JSON.stringify(j) !== JSON.stringify(plan);
+      plan = j; LS.set('bw.plan', j);
+      if (changed){ renderAll(); toast('The plan has been updated'); }
+    } catch (e) {}
+  }
+  renderAll(); loadPlan();
+  setInterval(renderAll, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadPlan(); });
+
+  // ---------- screens ----------
+  function show(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+    window.scrollTo(0, 0);
+    if (id === 'call' || id === 'where' || id === 'home') renderAll();
+    if (id === 'eta') runEta();
+  }
+  document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) show(b.dataset.go); });
+
+  // ---------- location ----------
+  const locHelp = 'Your phone wouldn’t share your location. Go to Settings › Privacy & Security › Location Services, make sure it’s on, then tap Safari Websites and choose “While Using”.';
+  function getSpot(){
+    return new Promise((resolve, reject) => {
+      if (!('geolocation' in navigator)) return reject(new Error('none'));
+      navigator.geolocation.getCurrentPosition(p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }), reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    });
+  }
+  const f5 = n => Number(n).toFixed(5);
+  const pinLink = s => 'https://maps.apple.com/?ll=' + f5(s.lat) + ',' + f5(s.lng) + '&q=I%27m%20here';
+  const dirLink = s => 'https://maps.apple.com/?daddr=' + f5(s.lat) + ',' + f5(s.lng) + '&dirflg=d';
+
+  $('sendBtn').addEventListener('click', async () => {
+    say('homeStatus', 'Finding where you are…');
+    let spot; try { spot = await getSpot(); } catch (e) { say('homeStatus', locHelp); return; }
+    const text = 'Here’s where I am: ' + pinLink(spot);
+    say('homeStatus', '');
+    if (navigator.share) {
+      try { await navigator.share({ text }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    go('sms:?&body=' + encodeURIComponent(text));
+  });
+
+  // ---------- geocoding ----------
+  async function geocode(s){
+    const pc = String(s.postcode || '').replace(/\s+/g, '');
+    if (pc){
+      try { const j = await fetchT('https://api.postcodes.io/postcodes/' + encodeURIComponent(pc), {}, 8000); if (j.result) return { lat: j.result.latitude, lng: j.result.longitude }; } catch (e) {}
+    }
+    if (s.address){
+      try {
+        const j = await fetchT('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=gb&q=' + encodeURIComponent(s.address), {}, 10000);
+        if (j[0]) return { lat: +j[0].lat, lng: +j[0].lon };
+      } catch (e) {}
+    }
+    return null;
+  }
+  const geoKeyOf = s => String(s.postcode || s.address || '').trim().toUpperCase();
+
+  // ---------- loo places (OpenStreetMap) ----------
+  const KIND = { services:'Motorway services', toilets:'Public toilet', fuel:'Petrol station (usually has a loo)' };
+  async function overpass(q){
+    let last;
+    for (const url of OVERPASS){
+      try { return await fetchT(url, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'data=' + encodeURIComponent(q) }, 20000); }
+      catch (e) { last = e; }
+    }
+    throw last;
+  }
+  function toPlaces(json){
+    const out = [];
+    for (const el of (json.elements || [])){
+      const t = el.tags || {}, lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
+      if (lat == null || t.access === 'private' || t.access === 'no') continue;
+      const kind = t.highway === 'services' ? 'services' : (t.amenity === 'toilets' ? 'toilets' : 'fuel');
+      const name = t.name || (kind === 'fuel' ? (t.brand ? t.brand + ' petrol station' : 'Petrol station') : kind === 'services' ? 'Services' : 'Public toilets');
+      out.push({ lat, lng, kind, name });
+    }
+    const svc = out.filter(p => p.kind === 'services');
+    return out.filter(p => p.kind === 'services' || !svc.some(s => dist(s, p) < 700));
+  }
+  function textWrangler(p, extra){
+    const body = '🚽 Loo stop! Heading to ' + p.name + (extra ? ' (' + extra + ')' : '') + '. Tap for directions: ' + dirLink(p);
+    go('sms:' + telOf(wr().phone) + '?&body=' + encodeURIComponent(body));
+  }
+  function renderStops(box, list, mode, label){
+    box._list = list;
+    const who = esc(wr().name || 'wrangler');
+    const canText = !!wr().phone;
+    box.innerHTML = list.map((p, i) => `
+      <div class="stop">
+        <p class="n">${esc(p.name)}</p>
+        <p class="k">${KIND[p.kind]}</p>
+        <p class="d">${esc(label(p))}</p>
+        <div class="row">
+          ${mode !== 'coop' ? `<a class="btn go" href="${dirLink(p)}">Take me there</a>` : ''}
+          ${mode !== 'solo' && canText ? `<button class="btn txt" data-i="${i}">Send to ${who}</button>` : ''}
+        </div>
+      </div>`).join('');
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.btn.txt'); if (!b) return;
+    const p = b.closest('#looStops, #routeStops')._list[+b.dataset.i];
+    textWrangler(p, p.distText);
+  });
+
+  async function openLoo(mode){
+    show('looList');
+    $('looTitle').textContent = mode === 'solo' ? 'Solo mission' : 'Co-op mission';
+    $('looNote').textContent = mode === 'solo' ? 'Tap “Take me there” and your map will open.' : 'Pick one and tap “Send to ' + (wr().name || 'wrangler') + '”. They’ll get a text with the directions.';
+    const box = $('looStops'); box.innerHTML = '<p class="note">Finding where you are…</p>';
+    let me; try { me = await getSpot(); } catch (e) { box.innerHTML = '<p class="status on">' + esc(locHelp) + '</p>' + fallback(mode, null); return; }
+    box.innerHTML = '<p class="note">Looking for loos near you…</p>';
+    const a = f5(me.lat) + ',' + f5(me.lng);
+    const q = `[out:json][timeout:20];(nwr["amenity"="toilets"](around:3000,${a});nwr["highway"="services"](around:25000,${a});nwr["amenity"="fuel"](around:4000,${a}););out center tags 120;`;
+    try {
+      const list = toPlaces(await overpass(q)).map(p => ({ ...p, m: dist(me, p) })).sort((x, y) => x.m - y.m).slice(0, 6);
+      if (!list.length) throw new Error('none');
+      list.forEach(p => p.distText = miles(p.m) + ' away');
+      renderStops(box, list, mode, p => p.distText + ' as the crow flies');
+      box.insertAdjacentHTML('beforeend', fallback(mode, me));
+    } catch (e) {
+      box.innerHTML = '<p class="note">Couldn’t load the list just now.</p>' + fallback(mode, me);
+    }
+  }
+  function fallback(mode, me){
+    if (mode === 'solo'){
+      const sll = me ? '&sll=' + f5(me.lat) + ',' + f5(me.lng) + '&z=14' : '';
+      return `<a class="big b-alt" href="https://maps.apple.com/?q=public%20toilets${sll}"><span class="ico">🔎</span><span>Search Apple Maps instead</span></a>`;
+    }
+    return `<button class="big b-alt" id="coopHelp"><span class="ico">🆘</span><span>Just text ${esc(wr().name || 'the wrangler')} where I am<small>They'll find one for you</small></span></button>`;
+  }
+  document.addEventListener('click', async e => {
+    if (!e.target.closest('#coopHelp')) return;
+    let body;
+    try { const s = await getSpot(); body = '🚽 LOO EMERGENCY! Can you find me one? I’m here: ' + pinLink(s); }
+    catch (_) { body = '🚽 LOO EMERGENCY! My phone won’t share where I am. Please ring me!'; }
+    go('sms:' + telOf(wr().phone) + '?&body=' + encodeURIComponent(body));
+  });
+  $('soloBtn').addEventListener('click', () => openLoo('solo'));
+  $('coopBtn').addEventListener('click', () => openLoo('coop'));
+
+  // ---------- are we there yet ----------
+  let dest = -1, etaTimer = null, etaRun = 0;
+  function renderPicks(){
+    const all = stops();
+    $('etaPicks').innerHTML = all.map((s, i) => `<button class="pick" data-dest="${i}" aria-pressed="${i === dest}">${esc((s.emoji ? s.emoji + ' ' : '') + s.name)}</button>`).join('');
+  }
+  $('etaPicks').addEventListener('click', e => { const b = e.target.closest('.pick'); if (b){ dest = +b.dataset.dest; runEta(); } });
+  $('etaRefresh').addEventListener('click', () => runEta());
+
+  async function runEta(){
+    const all = stops();
+    if (dest < 0 || dest >= all.length) dest = Math.max(0, nextIdx());
+    renderPicks();
+    const run = ++etaRun, d = all[dest], box = $('routeStops');
+    clearInterval(etaTimer);
+    etaTimer = setInterval(() => { if ($('eta').classList.contains('on')) runEta(); else clearInterval(etaTimer); }, 180000);
+    $('etaLeft').textContent = d ? 'Working it out…' : 'No stops in the plan yet';
+    $('etaSub').textContent = ''; $('etaVerdict').textContent = ''; $('etaVerdict').className = 'verdict'; $('etaCall').hidden = true;
+    if (!d){ box.innerHTML = ''; return; }
+    box.innerHTML = '<p class="note">Looking along your route…</p>';
+
+    let me; try { me = await getSpot(); } catch (e) { if (run !== etaRun) return; $('etaLeft').textContent = 'Can’t tell where you are'; $('etaSub').textContent = locHelp; box.innerHTML = ''; return; }
+    if (d.lat == null){ const g = await geocode(d); if (g){ d.lat = g.lat; d.lng = g.lng; plan.stops[dest].lat = g.lat; plan.stops[dest].lng = g.lng; } }
+    if (run !== etaRun) return;
+    if (d.lat == null){ $('etaLeft').textContent = 'Can’t find that stop on the map'; $('etaSub').textContent = 'Use “Where am I going?” instead.'; box.innerHTML = ''; return; }
+    if (dist(me, d) < 400){ $('etaLeft').textContent = 'You’re here! 🎉'; $('etaSub').textContent = 'Enjoy ' + d.name + '.'; box.innerHTML = '<p class="note">No more stops needed.</p>'; return; }
+
+    let route;
+    try {
+      const j = await fetchT(`https://router.project-osrm.org/route/v1/driving/${f5(me.lng)},${f5(me.lat)};${f5(d.lng)},${f5(d.lat)}?overview=full&geometries=geojson`, {}, 15000);
+      route = j.routes && j.routes[0]; if (!route) throw new Error('no route');
+    } catch (e) {
+      if (run !== etaRun) return;
+      $('etaLeft').textContent = 'About ' + miles(dist(me, d)) + ' to go';
+      $('etaSub').textContent = 'That’s as the crow flies. Couldn’t get a driving time just now, check the satnav.';
+      box.innerHTML = '<p class="note">Couldn’t check the route. Try “Update” in a minute.</p>';
+      return;
+    }
+    if (run !== etaRun) return;
+
+    const now = new Date(), arrive = new Date(now.getTime() + route.duration * 1000);
+    $('etaLeft').textContent = 'About ' + fmtLeft(route.duration * 1000) + ' to go';
+    $('etaSub').textContent = miles(route.distance) + ' · arrive about ' + clock(arrive);
+    $('etaUpdated').textContent = 'Updated ' + clock(now) + '. Doesn’t include traffic, so if the satnav says later, trust the satnav.';
+    const v = $('etaVerdict');
+    if (sameDay(now, d.start) && now < d.end){
+      const late = Math.round((arrive - d.start) / 60000);
+      if (late > 0){
+        v.textContent = 'That’s about ' + fmtLeft(late * 60000) + ' after the ' + clock(d.start) + ' start.'; v.classList.add('late');
+        if (d.phone){ $('etaCall').href = 'tel:' + telOf(d.phone); $('etaCallLabel').innerHTML = 'Ring ' + esc(d.callLabel || d.name) + '<small class="num" style="font-size:20px">' + esc(showPhone(d.phone)) + '</small>'; $('etaCall').hidden = false; }
+      } else { v.textContent = 'That’s before the ' + clock(d.start) + ' start 👍'; v.classList.add('ok'); }
+    } else if (now < d.start) {
+      v.textContent = 'On ' + longDate(d.start) + ', aim to arrive before ' + clock(d.start) + '.';
+    }
+
+    const coords = route.geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+    const cum = [0]; for (let i = 1; i < coords.length; i++) cum[i] = cum[i-1] + dist(coords[i-1], coords[i]);
+    const pts = []; let nextAt = 0;
+    for (let i = 0; i < coords.length && cum[i] < 130000; i++){ if (cum[i] >= nextAt){ pts.push(f5(coords[i].lat) + ',' + f5(coords[i].lng)); nextAt += 2500; } }
+    if (pts.length < 2){ box.innerHTML = '<p class="note">You’re nearly there!</p>'; return; }
+    const line = pts.join(',');
+    const q = `[out:json][timeout:25];(nwr["highway"="services"](around:600,${line});nwr["amenity"="toilets"](around:200,${line});nwr["amenity"="fuel"](around:120,${line}););out center tags 150;`;
+    try {
+      const places = toPlaces(await overpass(q)).map(p => {
+        let best = 0, bd = Infinity;
+        for (let i = 0; i < coords.length; i += 3){ const dd = dist(p, coords[i]); if (dd < bd){ bd = dd; best = i; } }
+        return { ...p, along: cum[best] };
+      }).filter(p => p.along > 500).sort((a, b) => a.along - b.along);
+      const pick = places.filter(p => p.kind === 'services').slice(0, 4);
+      for (const p of places){ if (pick.length >= 6) break; if (!pick.includes(p)) pick.push(p); }
+      pick.sort((a, b) => a.along - b.along);
+      if (run !== etaRun) return;
+      if (!pick.length){ box.innerHTML = '<p class="note">Nothing found right on your route in the next 80 miles. Try the “I need the loo!” button for places nearby.</p>'; return; }
+      pick.forEach(p => { p.distText = 'in ' + miles(p.along) + ', about ' + fmtLeft(route.duration * 1000 * p.along / route.distance); });
+      renderStops(box, pick, 'both', p => p.distText.charAt(0).toUpperCase() + p.distText.slice(1));
+    } catch (e) {
+      if (run === etaRun) box.innerHTML = '<p class="note">Couldn’t load loo stops just now. Try “Update” in a minute.</p>';
+    }
+  }
+
+  // ================= EDITOR =================
+  let draft = null, unlocked = false;
+  const blankStop = d => ({ emoji:'📍', name:'', date: d, time:'', ends:'', place:'', address:'', postcode:'', phone:'', callLabel:'', note:'' });
+  async function hashPin(p){
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('bremner-wrangler:' + p));
+    return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  const saveDraft = () => LS.set('bw.draft', draft);
+  const gh = () => LS.get('bw.gh', { owner:'', repo:'bremner-wrangler', token:'' });
+
+  $('editLink').addEventListener('click', () => {
+    if (plan.editPinHash && !unlocked){ $('pinIn').value = ''; say('pinStatus', ''); show('pin'); setTimeout(() => $('pinIn').focus(), 50); }
+    else openEditor();
+  });
+  async function tryPin(){
+    if (await hashPin($('pinIn').value.trim()) === plan.editPinHash){ unlocked = true; openEditor(); }
+    else say('pinStatus', 'That PIN isn’t right.');
+  }
+  $('pinGo').addEventListener('click', tryPin);
+  $('pinIn').addEventListener('keydown', e => { if (e.key === 'Enter') tryPin(); });
+
+  function openEditor(){
+    draft = LS.get('bw.draft', null) || clone(plan);
+    draft.wrangler = draft.wrangler || { name:'', phone:'' };
+    renderEditor(); say('pubStatus', '');
+    const g = gh(); $('ghOwner').value = g.owner || ''; $('ghRepo').value = g.repo || ''; $('ghToken').value = g.token || ''; $('pinSet').value = '';
+    $('setup').open = !g.token;
+    show('editor');
+  }
+  function getPath(o, p){ return p.split('.').reduce((a, k) => a && a[k], o); }
+  function setPath(o, p, v){ const ks = p.split('.'); let a = o; ks.slice(0, -1).forEach(k => a = a[k] = a[k] || {}); a[ks[ks.length - 1]] = v; }
+
+  function renderEditor(){
+    document.querySelectorAll('[data-ef]').forEach(i => i.value = getPath(draft, i.dataset.ef) || '');
+    const n = draft.stops.length;
+    $('edStops').innerHTML = draft.stops.map((s, i) => {
+      const found = s.lat != null && s.geoKey === geoKeyOf(s);
+      return `
+      <div class="card" data-i="${i}">
+        <div class="ed-head"><b>Stop ${i + 1}</b>
+          <span class="row" style="flex-wrap:nowrap">
+            <button data-act="up" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>↑</button>
+            <button data-act="down" aria-label="Move down" ${i === n - 1 ? 'disabled' : ''}>↓</button>
+            <button data-act="del">Delete</button>
+          </span>
+        </div>
+        <div class="two" style="grid-template-columns:5em minmax(0,1fr)">
+          <label>Emoji <input data-f="emoji" value="${esc(s.emoji)}" maxlength="4"></label>
+          <label>What is it? <input data-f="name" value="${esc(s.name)}" placeholder="Dinner"></label>
+        </div>
+        <div class="two">
+          <label>Date <input type="date" data-f="date" value="${esc(s.date || draft.date)}"></label>
+          <label>Starts <input type="time" data-f="time" value="${esc(s.time)}"></label>
+        </div>
+        <label>Finishes (optional) <input type="time" data-f="ends" value="${esc(s.ends)}"></label>
+        <label>Short place name <input data-f="place" value="${esc(s.place)}" placeholder="Great Hall, Lancaster University"></label>
+        <label>Address <input data-f="address" value="${esc(s.address)}" placeholder="3 Plawsworth Road, Sacriston"></label>
+        <label>Postcode <input data-f="postcode" value="${esc(s.postcode)}" autocapitalize="characters" placeholder="DH7 6HJ"></label>
+        <p class="geo" data-geo>${found ? `📍 Found on the map. <a href="https://maps.apple.com/?ll=${f5(s.lat)},${f5(s.lng)}&q=${encodeURIComponent(s.name || 'Stop')}">Check it</a>` : '📍 Will be looked up when you publish.'}</p>
+        <div class="two" style="margin-top:10px">
+          <label>Phone (optional) <input type="tel" data-f="phone" value="${esc(s.phone)}" placeholder="0191..."></label>
+          <label>Button says "Call…" <input data-f="callLabel" value="${esc(s.callLabel)}" placeholder="the restaurant"></label>
+        </div>
+        <label>Note (optional) <textarea data-f="note" placeholder="e.g. Park in the north car park">${esc(s.note)}</textarea></label>
+      </div>`;
+    }).join('') || '<p class="note">No stops yet. Add one below.</p>';
+  }
+  $('editor').addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.ef){ setPath(draft, t.dataset.ef, t.value); saveDraft(); return; }
+    const card = t.closest('[data-i]'); if (!card || !t.dataset.f) return;
+    const s = draft.stops[+card.dataset.i]; s[t.dataset.f] = t.value; saveDraft();
+    if (t.dataset.f === 'postcode' || t.dataset.f === 'address'){
+      const g = card.querySelector('[data-geo]');
+      if (g && s.geoKey !== geoKeyOf(s)) g.textContent = '📍 Will be looked up when you publish.';
+    }
+  });
+  $('edStops').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const i = +b.closest('[data-i]').dataset.i, a = draft.stops;
+    if (b.dataset.act === 'up' && i > 0) [a[i-1], a[i]] = [a[i], a[i-1]];
+    if (b.dataset.act === 'down' && i < a.length - 1) [a[i+1], a[i]] = [a[i], a[i+1]];
+    if (b.dataset.act === 'del'){ if (!confirm('Delete stop ' + (i + 1) + (a[i].name ? ' (' + a[i].name + ')' : '') + '?')) return; a.splice(i, 1); }
+    saveDraft(); renderEditor();
+  });
+  $('addStop').addEventListener('click', () => {
+    const last = draft.stops[draft.stops.length - 1];
+    draft.stops.push(blankStop((last && last.date) || draft.date || ''));
+    saveDraft(); renderEditor();
+    const cards = $('edStops').querySelectorAll('[data-i]'); const c = cards[cards.length - 1];
+    if (c){ c.scrollIntoView({ block:'start' }); c.querySelector('[data-f=name]').focus(); }
+  });
+  $('discardBtn').addEventListener('click', () => {
+    if (!confirm('Throw away your unpublished changes?')) return;
+    LS.del('bw.draft'); draft = clone(plan); renderEditor(); toast('Back to the published plan');
+  });
+  $('newEventBtn').addEventListener('click', () => {
+    if (!confirm('Start a new event? This clears the stops in your draft (the published plan stays until you publish).')) return;
+    draft = { title:'', date:'', wrangler: clone(draft.wrangler || {}), stops:[blankStop('')], editPinHash: draft.editPinHash || '', updated: draft.updated };
+    saveDraft(); renderEditor(); window.scrollTo(0, 0); document.querySelector('[data-ef=title]').focus();
+  });
+
+  // settings
+  ['ghOwner','ghRepo','ghToken'].forEach(id => $(id).addEventListener('input', () => {
+    LS.set('bw.gh', { owner: $('ghOwner').value.trim(), repo: $('ghRepo').value.trim(), token: $('ghToken').value.trim() });
+  }));
+  const ghHeaders = t => ({ 'Authorization':'Bearer ' + t, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' });
+  $('ghTest').addEventListener('click', async () => {
+    const g = gh(); if (!g.owner || !g.repo || !g.token){ say('ghStatus', 'Fill in your username, repo name and token first.'); return; }
+    say('ghStatus', 'Checking…');
+    try {
+      const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(g.owner)}/${encodeURIComponent(g.repo)}`, { headers: ghHeaders(g.token) });
+      if (r.status === 401) return say('ghStatus', 'GitHub didn’t accept that token. Check it hasn’t expired.');
+      if (r.status === 404) return say('ghStatus', 'Can’t see that repo. Check the names, and that the token has access to it.');
+      const j = await r.json();
+      say('ghStatus', j.permissions && j.permissions.push ? '✅ Connected. You can publish.' : 'Connected, but the token can’t write. Give it Contents: Read and write.');
+    } catch (e) { say('ghStatus', 'Couldn’t reach GitHub. Check your signal.'); }
+  });
+
+  function b64(str){ const bytes = new TextEncoder().encode(str); let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b)); return btoa(bin); }
+
+  $('publishBtn').addEventListener('click', async () => {
+    const btn = $('publishBtn'); if (btn.disabled) return;
+    const fail = m => { say('pubStatus', m); btn.disabled = false; };
+    btn.disabled = true;
+    // checks
+    if (!String(draft.title || '').trim()) return fail('Give the event a name first.');
+    if (!draft.stops.length) return fail('Add at least one stop.');
+    for (const [i, s] of draft.stops.entries()){
+      const label = 'Stop ' + (i + 1) + (s.name ? ' (' + s.name + ')' : '');
+      if (!String(s.name || '').trim()) return fail(label + ' needs a name.');
+      if (!s.date && !draft.date) return fail(label + ' needs a date.');
+      if (!s.time) return fail(label + ' needs a start time.');
+      if (!s.address && !s.postcode) return fail(label + ' needs an address or postcode.');
+    }
+    if (!draft.date) draft.date = draft.stops[0].date;
+    if (draft.wrangler && draft.wrangler.phone && telOf(draft.wrangler.phone).length < 12) return fail('The wrangler’s mobile number doesn’t look right.');
+    const g = gh();
+    if (!g.owner || !g.repo || !g.token){ $('setup').open = true; return fail('Fill in the publishing settings at the bottom first.'); }
+
+    // look up any new or changed places
+    for (const s of draft.stops){
+      if (s.lat != null && s.geoKey === geoKeyOf(s)) continue;
+      say('pubStatus', 'Finding ' + s.name + ' on the map…');
+      const loc = await geocode(s);
+      if (!loc) return fail('Couldn’t find ' + s.name + ' on the map. Check the postcode.');
+      s.lat = +loc.lat.toFixed(5); s.lng = +loc.lng.toFixed(5); s.geoKey = geoKeyOf(s);
+    }
+    draft.stops.sort((a, b) => at(a.date || draft.date, a.time) - at(b.date || draft.date, b.time));
+    const newPin = $('pinSet').value.trim();
+    if (newPin){ if (newPin.length < 4) return fail('Make the PIN at least 4 digits.'); draft.editPinHash = await hashPin(newPin); }
+    draft.updated = new Date().toISOString();
+
+    say('pubStatus', 'Publishing…');
+    const api = `https://api.github.com/repos/${encodeURIComponent(g.owner)}/${encodeURIComponent(g.repo)}/contents/plan.json`;
+    try {
+      let sha;
+      const cur = await fetch(api + '?t=' + Date.now(), { headers: ghHeaders(g.token), cache:'no-store' });
+      if (cur.ok) sha = (await cur.json()).sha;
+      else if (cur.status !== 404) return fail(cur.status === 401 ? 'GitHub didn’t accept the token. Check it in the settings.' : 'GitHub said no (' + cur.status + '). Use “Test connection” in the settings.');
+      const body = { message: 'Update plan: ' + draft.title, content: b64(JSON.stringify(draft, null, 2) + '\n') };
+      if (sha) body.sha = sha;
+      const r = await fetch(api, { method:'PUT', headers: { ...ghHeaders(g.token), 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) return fail(r.status === 409 ? 'Someone else just published. Tap Publish again.' : r.status === 403 || r.status === 404 ? 'The token can’t write to that repo. Give it Contents: Read and write.' : 'GitHub said no (' + r.status + '). Try again.');
+    } catch (e) { return fail('Couldn’t reach GitHub. Check your signal and try again.'); }
+
+    plan = clone(draft); LS.set('bw.plan', plan); LS.del('bw.draft'); $('pinSet').value = ''; unlocked = true;
+    renderAll(); renderEditor(); btn.disabled = false;
+    say('pubStatus', '✅ Published! Everyone’s app will pick it up within a few minutes, next time they open it.');
+  });
+}
+</script>
+</body>
+</html>

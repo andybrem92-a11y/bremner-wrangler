@@ -1,0 +1,41 @@
+{
+  "title": "Bremner Graduation",
+  "date": "2026-12-09",
+  "wrangler": { "name": "Andy", "phone": "07704153178" },
+  "stops": [
+    {
+      "emoji": "🎓",
+      "name": "Graduation ceremony",
+      "date": "2026-12-09",
+      "time": "13:45",
+      "ends": "15:00",
+      "place": "Great Hall, Lancaster University",
+      "address": "Great Hall, Lancaster University, Bailrigg, Lancaster",
+      "postcode": "LA1 4YW",
+      "phone": "",
+      "callLabel": "",
+      "note": "The ceremony lasts about 1 hour 15 minutes.",
+      "lat": 54.0103,
+      "lng": -2.7868,
+      "geoKey": "LA1 4YW"
+    },
+    {
+      "emoji": "🍽️",
+      "name": "Dinner",
+      "date": "2026-12-09",
+      "time": "18:30",
+      "ends": "21:30",
+      "place": "3 Plawsworth Road, Sacriston",
+      "address": "3 Plawsworth Road, Sacriston, Durham",
+      "postcode": "DH7 6HJ",
+      "phone": "01913802898",
+      "callLabel": "the restaurant",
+      "note": "",
+      "lat": 54.8199,
+      "lng": -1.6268,
+      "geoKey": "DH7 6HJ"
+    }
+  ],
+  "editPinHash": "",
+  "updated": "2026-11-19T16:30:00.000Z"
+}
